@@ -1,0 +1,8 @@
+
+{
+  "name": "ISA'S TRANSPORTES - Atributo",
+  "description": "Uma ferramenta de mapeamento de atributos CTe de alta performance que processa arquivos XML, extrai observações dinâmicas e gera exportações estruturadas para a ISA'S Transportes.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
