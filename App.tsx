@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
@@ -9,7 +8,7 @@ import {
   Link as LinkIcon, AlertCircle, Box, Info, Code,
   CreditCard, MapPin, Weight, DollarSign, Hash,
   Tag, ClipboardList, Building2, CloudDownload, UserCheck, MessageSquare, Map, Percent,
-  CheckCircle2, AlertTriangle, Calculator, Users
+  CheckCircle2, AlertTriangle, Calculator, Users, Layers
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { CTeData, AppTab } from './types';
@@ -169,7 +168,7 @@ const App: React.FC = () => {
                   onClick={() => { setSelectedId(d.id); setActiveTab('info'); }} 
                   className="bg-white p-6 rounded-[1.5rem] border hover:shadow-xl transition-all cursor-pointer group border-slate-200 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
-                  <div className={`absolute top-0 left-0 w-1.5 h-full ${d.statusConciliacao === 'Conciliado' ? 'bg-emerald-500 shadow-[2px_0_10px_rgba(16,185,129,0.3)]' : 'bg-red-500 shadow-[2px_0_10px_rgba(239,68,68,0.3)]'}`}></div>
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${d.statusConciliacao === 'Conciliado' ? 'bg-emerald-500 shadow-[2px_0_10px_rgba(16,185,129,0.3)]' : 'bg-red-500 shadow-[2px_0_10_rgba(239,68,68,0.3)]'}`}></div>
                   
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
@@ -244,7 +243,28 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-8 pt-8 border-t border-slate-200/50">
+                  
+                  {/* Destaque para Observação (xObs) e códigos detectados */}
+                  <div className="mt-6 bg-white/40 p-6 rounded-3xl border border-white/50">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <Info size={14} className="text-red-500"/> Observação do XML (xObs)
+                      </div>
+                      <div className="flex items-center gap-3">
+                         {selectedData.numeroLT !== "N/A" && (
+                           <div className="px-3 py-1 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-tight shadow-md">Cod. Cotação: {selectedData.numeroLT}</div>
+                         )}
+                         {selectedData.romaneio !== "N/A" && (
+                           <div className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-tight shadow-md">SOLTRANSP: {selectedData.romaneio}</div>
+                         )}
+                      </div>
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 leading-relaxed italic">
+                      {selectedData.observacao || "Nenhuma observação informada no XML."}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 pt-6 border-t border-slate-200/50">
                     <div className="flex flex-wrap items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                       <Calculator size={14} className="text-slate-400"/> 
                       <div className="flex items-center gap-1.5">ICMS <span className="text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm">R$ {selectedData.valorIcmsComp}</span></div>
@@ -271,9 +291,10 @@ const App: React.FC = () => {
                   <div className="bg-white p-6 rounded-[2rem] border shadow-sm group hover:border-red-100 transition-colors">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shadow-md"><Weight size={18}/></div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Frete Líquido</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Valor Líquido</span>
                     </div>
-                    <p className="font-black text-slate-800 text-xl leading-tight">R$ {selectedData.fretePeso}</p>
+                    <p className="font-black text-slate-800 text-xl leading-tight">R$ {selectedData.valorLiquido}</p>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">(Total - ICMS)</span>
                   </div>
                   <div className="bg-white p-6 rounded-[2rem] border shadow-sm group hover:border-red-100 transition-colors">
                     <div className="flex items-center gap-3 mb-4">
@@ -286,6 +307,22 @@ const App: React.FC = () => {
                       <span className="bg-slate-50 px-2 py-1 rounded uppercase tracking-tighter">{selectedData.destino}</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
+                   <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center"><Layers size={18}/></div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Documentos Fiscais (NFe)</span>
+                   </div>
+                   <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                      <p className="text-sm font-black text-slate-800 leading-loose break-all">
+                        {selectedData.chavesNFe || "Nenhum documento identificado."}
+                      </p>
+                      <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                         <span className="text-[9px] font-black text-slate-400 uppercase">Total de Notas: {selectedData.chavesNFe ? selectedData.chavesNFe.split(' ; ').length : 0}</span>
+                         <span className="text-[8px] font-bold text-slate-300 uppercase italic">Dados extraídos da Chave NFe</span>
+                      </div>
+                   </div>
                 </div>
                 
                 <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
@@ -339,24 +376,42 @@ const App: React.FC = () => {
             <h2 className="text-4xl font-black text-slate-950 uppercase italic tracking-tighter">Relatório Auditoria ISA'S</h2>
             <button 
               onClick={() => {
-                const ws = XLSX.utils.json_to_sheet(data.map(d => ({
-                  STATUS: d.statusConciliacao,
-                  NCT: d.nCT,
-                  EMITENTE: d.emitente,
-                  DESTINATARIO: d.destinatario,
-                  VALOR_XML: d.valor,
-                  SOMA_AUDITORIA: d.valorCalculadoSoma,
-                  ICMS: d.valorIcmsComp,
-                  PEDAGIO: d.valorPedagio,
-                  GRIS: d.valorGris,
-                  FRETE_PESO: d.fretePeso,
-                  ORIGEM: d.origem,
-                  DESTINO: d.destino,
-                  CHAVE: d.chave
-                })));
+                const wsData = data.map(d => ({
+                  "STATUS CONCILIACAO": d.statusConciliacao,
+                  "NUMERO CTE": d.nCT,
+                  "COD. COTAÇÃO": d.numeroLT,
+                  "SOLTRANSP": d.romaneio,
+                  "EMITENTE": d.emitente,
+                  "DESTINATARIO": d.destinatario,
+                  "NUMEROS NFES": d.chavesNFe,
+                  "VALOR TOTAL (EMITIDO)": `R$ ${d.valor}`,
+                  "VALOR AUDITADO (SOMA)": `R$ ${d.valorCalculadoSoma}`,
+                  "COMPONENTE FRETE PESO": `R$ ${d.fretePeso}`,
+                  "COMPONENTE ICMS": `R$ ${d.valorIcmsComp}`,
+                  "COMPONENTE PEDAGIO": `R$ ${d.valorPedagio}`,
+                  "COMPONENTE GRIS": `R$ ${d.valorGris}`,
+                  "MUNICIPIO ORIGEM": d.origem,
+                  "MUNICIPIO DESTINO": d.destino,
+                  "TIPO OPERACAO": d.tipoOperacao,
+                  "TIPO VEICULO": d.tipoVeiculo,
+                  "OBSERVACAO (XOBS)": d.observacao,
+                  "CHAVE ACESSO CTE": d.chave,
+                  "ARQUIVO FONTE": d.filename
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(wsData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Auditoria");
-                XLSX.writeFile(wb, `ISA_Conciliacao_${Date.now()}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "Auditoria ISA'S");
+                
+                const wscols = [
+                  {wch: 25}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 35}, 
+                  {wch: 35}, {wch: 30}, {wch: 25}, {wch: 25}, {wch: 22},
+                  {wch: 22}, {wch: 22}, {wch: 22}, {wch: 25}, {wch: 25},
+                  {wch: 20}, {wch: 20}, {wch: 50}, {wch: 48}, {wch: 25}
+                ];
+                ws['!cols'] = wscols;
+
+                XLSX.writeFile(wb, `ISA_Relatorio_Auditoria_${new Date().toISOString().split('T')[0]}.xlsx`);
               }}
               disabled={data.length === 0}
               className="px-16 py-6 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] shadow-2xl flex items-center gap-4 disabled:opacity-20 transition-all active:scale-95"

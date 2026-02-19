@@ -1,4 +1,3 @@
-
 import { CTeData } from '../types';
 
 const findElementResilient = (parent: Element | Document, localName: string): Element | null => {
@@ -60,6 +59,23 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
     const dest = findElementResilient(infCte, "dest");
     const destinatario = dest ? getElementValueResilient(dest, "xNome") : "N/A";
 
+    // Extração de Números de NFe (apenas o número do documento, posições 26-34 da chave)
+    const nfeNumbers: string[] = [];
+    const infDoc = findElementResilient(infCte, "infDoc");
+    if (infDoc) {
+      const infNFes = infDoc.getElementsByTagNameNS("*", "infNFe");
+      for (let i = 0; i < infNFes.length; i++) {
+        const fullKey = getElementValueResilient(infNFes[i], "chave");
+        if (fullKey && fullKey.length === 44) {
+          const nfeNum = fullKey.substring(25, 34);
+          nfeNumbers.push(nfeNum);
+        } else if (fullKey) {
+          nfeNumbers.push(fullKey);
+        }
+      }
+    }
+    const chavesNFe = nfeNumbers.join(" ; ");
+
     // Extração de Componentes do Valor
     let fretePesoVal = 0;
     let pedagioVal = 0;
@@ -92,19 +108,36 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
     const somaCalculada = icmsCompVal + pedagioVal + grisVal + freteFinal;
     const isConciliado = Math.abs(somaCalculada - nValorTotal) < 0.05;
 
-    let vBC = "0,00", pICMS = "0,00", vICMS = "0,00";
+    // Extração de Impostos
+    let vBC = "0,00", pICMS = "0,00", vICMS = "0,00", nVICMS = 0;
     const icmsNodes = ["ICMS00", "ICMS20", "ICMS45", "ICMS60", "ICMS90", "ICMSOutraUF", "ICMSSN"];
     for (const tag of icmsNodes) {
       const node = findElementResilient(infCte, tag);
       if (node) {
         vBC = getElementValueResilient(node, "vBC") || vBC;
         pICMS = getElementValueResilient(node, "pICMS") || pICMS;
-        vICMS = getElementValueResilient(node, "vICMS") || vICMS;
+        const vIcmsStr = getElementValueResilient(node, "vICMS") || "0";
+        vICMS = vIcmsStr;
+        nVICMS = parseFloat(vIcmsStr) || 0;
         break;
       }
     }
 
+    const nValorLiquido = nValorTotal - nVICMS;
+
     const camposDinamicos: Record<string, string> = {};
+    const compl = findElementResilient(infCte, "compl");
+    const xObs = compl ? getElementValueResilient(compl, "xObs") : "";
+
+    // EXTRAÇÃO INTELIGENTE DE CÓDIGOS DA OBSERVAÇÃO
+    // Padrão 1: 10 dígitos numéricos (ex: 3157725929)
+    const matchLT = xObs.match(/\b\d{10}\b/);
+    const numeroLT = matchLT ? matchLT[0] : "N/A";
+
+    // Padrão 2: Formato Ano-Sequência (ex: 2026-00231)
+    const matchRomaneio = xObs.match(/\b\d{4}-\d{5}\b/);
+    const romaneio = matchRomaneio ? matchRomaneio[0] : "N/A";
+
     const obsConts = infCte.getElementsByTagNameNS("*", "ObsCont");
     for (let i = 0; i < obsConts.length; i++) {
       const xCampo = obsConts[i].getAttribute("xCampo") || "";
@@ -112,7 +145,6 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
       if (xCampo) camposDinamicos[xCampo] = xTexto;
     }
 
-    // ID gerado a partir do nCT + Destinatário + Sufixo Aleatório para evitar duplicatas reais
     const generatedId = `${nCT}-${destinatario.replace(/\s+/g, '')}-${Math.random().toString(36).substring(2, 7)}`;
 
     return {
@@ -125,24 +157,16 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
       destino: getElementValueResilient(infCte, "xMunFim") || "N/A",
       destinoUF: getElementValueResilient(infCte, "UFFim") || "??",
       valor: nValorTotal.toFixed(2).replace('.', ','),
+      valorLiquido: nValorLiquido.toFixed(2).replace('.', ','),
       categoriaCarga: getElementValueResilient(infCte, "xOutCat") || "Não Identificada",
-      pathCategoriaCarga: "infCte/infCTeNorm/infCarga/xOutCat",
       destinatario,
-      pathDestinatario: "infCte/dest/xNome",
-      observacao: getElementValueResilient(infCte, "xObs") || "N/A",
-      pathObservacao: "infCte/compl/xObs",
+      observacao: xObs || "N/A",
       municipioInicio: xMunIni,
-      pathMunicipioInicio: "infCte/ide/xMunIni",
       municipioFim: xMunFim,
-      pathMunicipioFim: "infCte/ide/xMunFim",
       valorPedagio: pedagioVal.toFixed(2).replace('.', ','),
-      pathValorPedagio: "infCte/vPrest/Comp[xNome='Pedágio']/vComp",
       valorFrete: freteGeralVal.toFixed(2).replace('.', ','),
-      pathValorFrete: "infCte/vPrest/Comp[xNome='Frete']/vComp",
       valorGris: grisVal.toFixed(2).replace('.', ','),
-      pathValorGris: "infCte/vPrest/Comp[xNome='Gris']/vComp",
       valorIcmsComp: icmsCompVal.toFixed(2).replace('.', ','),
-      pathValorIcmsComp: "infCte/vPrest/Comp[xNome='ICMS']/vComp",
       valorCalculadoSoma: somaCalculada.toFixed(2).replace('.', ','),
       statusConciliacao: isConciliado ? 'Conciliado' : 'Erro na Conciliação',
       tipoOperacao: camposDinamicos["TipoOperacao"] || "N/A",
@@ -151,25 +175,19 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
       rota: camposDinamicos["Rota"] || "N/A",
       fretePeso: freteFinal.toFixed(2).replace('.', ','),
       cfop,
-      numeroLT: camposDinamicos["NumeroLT"] || "N/A",
-      romaneio: camposDinamicos["Romaneio"] || "N/A",
+      numeroLT: numeroLT !== "N/A" ? numeroLT : (camposDinamicos["NumeroLT"] || "N/A"),
+      romaneio: romaneio !== "N/A" ? romaneio : (camposDinamicos["Romaneio"] || "N/A"),
       emitente,
       camposDinamicos,
-      pathOperacao: "infCte/compl/ObsCont[@xCampo='TipoOperacao']",
-      pathVeiculo: "infCte/compl/ObsCont[@xCampo='TipoVeiculo']",
-      pathCobranca: "infCte/compl/ObsCont[@xCampo='TipoCobranca']",
-      pathRota: "infCte/compl/ObsCont[@xCampo='Rota']",
-      pathFretePeso: "infCte/vPrest/Comp[xNome='Frete peso']/vComp",
-      pathCfop: "infCte/ide/CFOP",
-      pathNumeroLT: "infCte/compl/ObsCont[@xCampo='NumeroLT']",
-      pathRomaneio: "infCte/compl/ObsCont[@xCampo='Romaneio']",
-      pathEmitente: "infCte/emit/xNome",
       vBC: vBC.replace('.', ','), 
       pICMS: pICMS.replace('.', ','), 
       vICMS: vICMS.replace('.', ','),
       km: "Pendente",
       caracteristicasAdicionais: getElementValueResilient(infCte, "xCaracAd") || null,
-      rawXml: cleanText
+      rawXml: cleanText,
+      chavesNFe,
+      pathChavesNFe: "infCte/infCTeNorm/infDoc/infNFe/chave (Reduzido)",
+      pathOperacao: "", pathVeiculo: "", pathCobranca: "", pathRota: "", pathFretePeso: "", pathCfop: "", pathNumeroLT: "", pathRomaneio: "", pathEmitente: "", pathDestinatario: "", pathCategoriaCarga: "", pathObservacao: "", pathMunicipioInicio: "", pathMunicipioFim: "", pathValorPedagio: "", pathValorFrete: "", pathValorGris: "", pathValorIcmsComp: ""
     };
   } catch (error) {
     console.error(`Falha no processamento do XML ${filename}:`, error);

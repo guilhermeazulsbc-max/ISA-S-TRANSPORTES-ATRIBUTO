@@ -1,4 +1,3 @@
-
 export interface CTeData {
   id: string;
   filename: string;
@@ -9,6 +8,7 @@ export interface CTeData {
   destino: string;
   destinoUF: string;
   valor: string; // Valor Total (vTPrest)
+  valorLiquido: string; // Valor Total - ICMS
   caracteristicasAdicionais: string | null;
   tipoOperacao: string;
   tipoVeiculo: string;
@@ -53,7 +53,9 @@ export interface CTeData {
   pICMS: string;
   vICMS: string;
   km: string;
-  rawXml: string; 
+  rawXml: string;
+  chavesNFe: string;
+  pathChavesNFe: string;
 }
 
 export type AppTab = 'upload' | 'tags' | 'info' | 'export';
