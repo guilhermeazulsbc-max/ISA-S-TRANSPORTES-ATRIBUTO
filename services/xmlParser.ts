@@ -59,11 +59,13 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
     const dest = findElementResilient(infCte, "dest");
     const destinatario = dest ? getElementValueResilient(dest, "xNome") : "N/A";
 
-    // Extração de Números de NFe (apenas o número do documento, posições 26-34 da chave)
+    // Extração de Números de NFe e Contagem
     const nfeNumbers: string[] = [];
+    let quantidadeNFe = 0;
     const infDoc = findElementResilient(infCte, "infDoc");
     if (infDoc) {
       const infNFes = infDoc.getElementsByTagNameNS("*", "infNFe");
+      quantidadeNFe = infNFes.length;
       for (let i = 0; i < infNFes.length; i++) {
         const fullKey = getElementValueResilient(infNFes[i], "chave");
         if (fullKey && fullKey.length === 44) {
@@ -130,11 +132,9 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
     const xObs = compl ? getElementValueResilient(compl, "xObs") : "";
 
     // EXTRAÇÃO INTELIGENTE DE CÓDIGOS DA OBSERVAÇÃO
-    // Padrão 1: 10 dígitos numéricos (ex: 3157725929)
     const matchLT = xObs.match(/\b\d{10}\b/);
     const numeroLT = matchLT ? matchLT[0] : "N/A";
 
-    // Padrão 2: Formato Ano-Sequência (ex: 2026-00231)
     const matchRomaneio = xObs.match(/\b\d{4}-\d{5}\b/);
     const romaneio = matchRomaneio ? matchRomaneio[0] : "N/A";
 
@@ -186,6 +186,7 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
       caracteristicasAdicionais: getElementValueResilient(infCte, "xCaracAd") || null,
       rawXml: cleanText,
       chavesNFe,
+      quantidadeNFe,
       pathChavesNFe: "infCte/infCTeNorm/infDoc/infNFe/chave (Reduzido)",
       pathOperacao: "", pathVeiculo: "", pathCobranca: "", pathRota: "", pathFretePeso: "", pathCfop: "", pathNumeroLT: "", pathRomaneio: "", pathEmitente: "", pathDestinatario: "", pathCategoriaCarga: "", pathObservacao: "", pathMunicipioInicio: "", pathMunicipioFim: "", pathValorPedagio: "", pathValorFrete: "", pathValorGris: "", pathValorIcmsComp: ""
     };

@@ -319,7 +319,11 @@ const App: React.FC = () => {
                         {selectedData.chavesNFe || "Nenhum documento identificado."}
                       </p>
                       <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-                         <span className="text-[9px] font-black text-slate-400 uppercase">Total de Notas: {selectedData.chavesNFe ? selectedData.chavesNFe.split(' ; ').length : 0}</span>
+                         <div className="flex items-center gap-4">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">Quantidade: {selectedData.quantidadeNFe}</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase">|</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase">Total de Notas: {selectedData.chavesNFe ? selectedData.chavesNFe.split(' ; ').length : 0}</span>
+                         </div>
                          <span className="text-[8px] font-bold text-slate-300 uppercase italic">Dados extraídos da Chave NFe</span>
                       </div>
                    </div>
@@ -383,6 +387,7 @@ const App: React.FC = () => {
                   "SOLTRANSP": d.romaneio,
                   "EMITENTE": d.emitente,
                   "DESTINATARIO": d.destinatario,
+                  "QUANTIDADE NF-e": d.quantidadeNFe,
                   "NUMEROS NFES": d.chavesNFe,
                   "VALOR TOTAL (EMITIDO)": `R$ ${d.valor}`,
                   "VALOR AUDITADO (SOMA)": `R$ ${d.valorCalculadoSoma}`,
@@ -405,7 +410,7 @@ const App: React.FC = () => {
                 
                 const wscols = [
                   {wch: 25}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 35}, 
-                  {wch: 35}, {wch: 30}, {wch: 25}, {wch: 25}, {wch: 22},
+                  {wch: 35}, {wch: 18}, {wch: 30}, {wch: 25}, {wch: 25}, {wch: 22},
                   {wch: 22}, {wch: 22}, {wch: 22}, {wch: 25}, {wch: 25},
                   {wch: 20}, {wch: 20}, {wch: 50}, {wch: 48}, {wch: 25}
                 ];

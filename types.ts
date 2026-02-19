@@ -55,6 +55,7 @@ export interface CTeData {
   km: string;
   rawXml: string;
   chavesNFe: string;
+  quantidadeNFe: number;
   pathChavesNFe: string;
 }
 
