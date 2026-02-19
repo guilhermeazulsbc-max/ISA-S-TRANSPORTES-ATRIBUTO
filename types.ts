@@ -7,7 +7,7 @@ export interface CTeData {
   origemUF: string;
   destino: string;
   destinoUF: string;
-  valor: string; // Valor Total (vTPrest)
+  valor: string; // Valor Total (vTPrest) - "Valor Transportador"
   valorLiquido: string; // Valor Total - ICMS
   caracteristicasAdicionais: string | null;
   tipoOperacao: string;
@@ -28,7 +28,8 @@ export interface CTeData {
   valorFrete: string;
   valorGris: string;
   valorIcmsComp: string;
-  valorCalculadoSoma: string;
+  valorCalculadoSoma: string; // "Valor Conciliado"
+  valorDiferenca: string; // Valor Transportador - Valor Conciliado
   statusConciliacao: 'Conciliado' | 'Erro na Conciliação';
   camposDinamicos: Record<string, string>;
   pathOperacao: string;

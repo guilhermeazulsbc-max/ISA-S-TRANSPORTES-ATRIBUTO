@@ -109,6 +109,7 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
     const freteFinal = fretePesoVal > 0 ? fretePesoVal : freteGeralVal;
     const somaCalculada = icmsCompVal + pedagioVal + grisVal + freteFinal;
     const isConciliado = Math.abs(somaCalculada - nValorTotal) < 0.05;
+    const nDiferenca = nValorTotal - somaCalculada;
 
     // Extração de Impostos
     let vBC = "0,00", pICMS = "0,00", vICMS = "0,00", nVICMS = 0;
@@ -168,6 +169,7 @@ export const parseCTeXML = async (filename: string, text: string): Promise<CTeDa
       valorGris: grisVal.toFixed(2).replace('.', ','),
       valorIcmsComp: icmsCompVal.toFixed(2).replace('.', ','),
       valorCalculadoSoma: somaCalculada.toFixed(2).replace('.', ','),
+      valorDiferenca: nDiferenca.toFixed(2).replace('.', ','),
       statusConciliacao: isConciliado ? 'Conciliado' : 'Erro na Conciliação',
       tipoOperacao: camposDinamicos["TipoOperacao"] || "N/A",
       tipoVeiculo: camposDinamicos["TipoVeiculo"] || "N/A",

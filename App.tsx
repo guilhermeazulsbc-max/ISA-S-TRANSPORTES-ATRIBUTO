@@ -98,6 +98,12 @@ const App: React.FC = () => {
     return data.find(d => d.id === selectedId) || null;
   }, [data, selectedId]);
 
+  // Auxiliar para converter "1.234,56" ou "1234,56" em número real para o Excel
+  const parseToExcelNumber = (val: string) => {
+    if (!val || val === "N/A") return 0;
+    return parseFloat(val.replace(/\./g, '').replace(',', '.'));
+  };
+
   if (!hasStarted) return <LandingPage onStart={() => setHasStarted(true)} />;
 
   return (
@@ -231,20 +237,28 @@ const App: React.FC = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Auditoria Financeira ISA'S TRANSPORTES • nCT {selectedData.nCT}</p>
                       </div>
                     </div>
-                    <div className="bg-white/50 p-6 rounded-3xl border border-white flex items-center gap-8 shadow-sm">
+                    <div className="bg-white/50 p-6 rounded-3xl border border-white flex flex-wrap items-center gap-8 shadow-sm">
                       <div className="text-center">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Soma Auditoria</span>
-                        <p className="text-xl font-black text-slate-800">R$ {selectedData.valorCalculadoSoma}</p>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor Transportador</span>
+                        <p className="text-xl font-black text-slate-800">R$ {selectedData.valor}</p>
                       </div>
                       <div className="w-px h-10 bg-slate-200"></div>
                       <div className="text-center">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor Total CTe</span>
-                        <p className="text-xl font-black text-slate-800">R$ {selectedData.valor}</p>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor Conciliado</span>
+                        <p className="text-xl font-black text-slate-800">R$ {selectedData.valorCalculadoSoma}</p>
                       </div>
+                      {selectedData.statusConciliacao !== 'Conciliado' && (
+                        <>
+                          <div className="w-px h-10 bg-slate-200"></div>
+                          <div className="text-center">
+                            <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">Diferença</span>
+                            <p className="text-xl font-black text-red-600 italic">R$ {selectedData.valorDiferenca}</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
-                  {/* Destaque para Observação (xObs) e códigos detectados */}
                   <div className="mt-6 bg-white/40 p-6 rounded-3xl border border-white/50">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                       <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -389,12 +403,13 @@ const App: React.FC = () => {
                   "DESTINATARIO": d.destinatario,
                   "QUANTIDADE NF-e": d.quantidadeNFe,
                   "NUMEROS NFES": d.chavesNFe,
-                  "VALOR TOTAL (EMITIDO)": `R$ ${d.valor}`,
-                  "VALOR AUDITADO (SOMA)": `R$ ${d.valorCalculadoSoma}`,
-                  "COMPONENTE FRETE PESO": `R$ ${d.fretePeso}`,
-                  "COMPONENTE ICMS": `R$ ${d.valorIcmsComp}`,
-                  "COMPONENTE PEDAGIO": `R$ ${d.valorPedagio}`,
-                  "COMPONENTE GRIS": `R$ ${d.valorGris}`,
+                  "Valor Transportador": parseToExcelNumber(d.valor),
+                  "Valor Conciliado": parseToExcelNumber(d.valorCalculadoSoma),
+                  "Diferença (Divergência)": parseToExcelNumber(d.valorDiferenca),
+                  "COMPONENTE FRETE PESO": parseToExcelNumber(d.fretePeso),
+                  "COMPONENTE ICMS": parseToExcelNumber(d.valorIcmsComp),
+                  "COMPONENTE PEDAGIO": parseToExcelNumber(d.valorPedagio),
+                  "COMPONENTE GRIS": parseToExcelNumber(d.valorGris),
                   "MUNICIPIO ORIGEM": d.origem,
                   "MUNICIPIO DESTINO": d.destino,
                   "TIPO OPERACAO": d.tipoOperacao,
@@ -410,7 +425,7 @@ const App: React.FC = () => {
                 
                 const wscols = [
                   {wch: 25}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 35}, 
-                  {wch: 35}, {wch: 18}, {wch: 30}, {wch: 25}, {wch: 25}, {wch: 22},
+                  {wch: 35}, {wch: 18}, {wch: 30}, {wch: 25}, {wch: 25}, {wch: 25}, {wch: 22},
                   {wch: 22}, {wch: 22}, {wch: 22}, {wch: 25}, {wch: 25},
                   {wch: 20}, {wch: 20}, {wch: 50}, {wch: 48}, {wch: 25}
                 ];
